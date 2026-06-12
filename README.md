@@ -3,6 +3,10 @@
 
 Este documento descreve a modelagem física, lógica e os relacionamentos do banco de dados da plataforma acadêmica inteligente **Aprende+**. O banco de dados foi desenvolvido utilizando **PostgreSQL** e hospedado no **Supabase**, aproveitando recursos de RLS (Row Level Security), temporizadores nativos e assinaturas em tempo real (Realtime).
 
+O arquivo 'schema_completo_atual.sql' tem uma unificação de todas as abas de consulta (editores de query) que utilizamos no desenvolvimento do banco de dados.
+A pasta 'edge functions' inclui as functions de cada ação, sendo algo que utilizamos no projeto real (invés dos Triggers), pois foi o melhor caso para nosso sistema.
+O arquivo 'atividadebanco.sql' foi realizado para cumprir as exigências da atividade, não sendo o modelo real utilizado no sistema real.
+
 ---
 
 ## 1. Diagrama Entidade-Relacionamento (DER)
@@ -272,9 +276,13 @@ Respostas enviadas pelos estudantes e suas respectivas correções.
 Como o **Aprende+** foi concebido como um produto de software funcional e escalável, a modelagem física e as políticas de segurança foram projetadas focando nas melhores práticas de engenharia de software atuais. A seguir, detalhamos algumas das escolhas arquiteturais que justificam o design do banco de dados, alinhadas à integração com a aplicação:
 
 ### 3.1. Lógica de Aplicação Desacoplada do Banco de Dados
+
 Na engenharia de software contemporânea, em particular na arquitetura Serverless (como a pilha React + Supabase), optou-se por centralizar as regras de negócio complexas, fluxos de validação e envio de dados na camada de aplicação (código TypeScript e **Supabase Edge Functions**) em vez de distribuí-las internamente no banco de dados via Procedures e Triggers clássicos (PL/pgSQL).
 - **Facilidade de Manutenção**: Manter a lógica no código da aplicação permite o rastreamento integral de alterações via controle de versão (Git) e viabiliza a implementação de testes unitários e de integração automatizados.
 - **Segurança de Cadastro**: A utilização de Edge Functions (como as que gerenciam a criação e deleção de professores e alunos) contorna limitações de segurança e manipulação de sessões do navegador, operando no backend sob privilégios específicos (`Service Role`), mantendo o banco de dados livre de gargalos e isolado de processamento de regras de infraestrutura complexas.
+
+- Em resumo: A escolha de Edge Functions em vez de Triggers foi motivada por boas práticas de arquitetura. O uso de Triggers para lógicas complexas pode causar gargalos de processamento (overhead) e travar transações no banco de dados. Com as Edge Functions, a lógica de negócio foi movida para a camada de computação em nuvem (serverless), garantindo maior escalabilidade e mantendo o banco de dados focado estritamente na persistência dos dados.
+
 
 ### 3.2. Abstração de Junções Dinâmicas (Supabase API Client vs. Views)
 O cliente de API do Supabase (`@supabase/supabase-js`) atua como uma camada flexível de relacionamento. Consultas de junções de dados (como cruzar alunos, disciplinas, turmas e submissões) são construídas de forma dinâmica no frontend sob demanda (usando seleções aninhadas e filtros nativos da API). 
